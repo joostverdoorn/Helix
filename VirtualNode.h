@@ -26,12 +26,15 @@ public:
 	virtual ~VirtualNode();
 
 	void ping();
-	bool available;
+	bool full;
 
 	void setLeft(Node*);
 	void setRight(Node*);
 
 	void addOccupant(Bullet*);
+	void removeOccupant(Bullet*);
+
+	void send(String message);
 
 private:
 	Stream *stream;
@@ -40,9 +43,16 @@ private:
 	Main::Direction direction;
 	State state;
 
-	bool isAvailable();
-	long lastUpdate();
-	int interval();
+	bool isFull();
+	long lastUpdate;
+	int interval;
+
+	bool available();
+	String receive();
+
+	String input;
+	String packetStart;
+	String packetEnd;
 
 };
 

@@ -28,7 +28,7 @@ public:
 	virtual ~LedNode();
 
 	void ping();
-	bool available();
+	bool isFull();
 
 	void emit();
 };

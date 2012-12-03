@@ -21,29 +21,32 @@ Bullet::Bullet(Node *h, Main::Direction d, uint8_t m) {
 }
 
 Bullet::~Bullet() {
+
 }
 
 void Bullet::ping() {
 	magnitude *= decay;
 
-	if(magnitude < 5) {
+	if (magnitude < 1) {
 		die();
+	} else {
+		move();
 	}
-
-	move();
 }
 
 void Bullet::die() {
+	Main::bullets.remove(this);
 	currentNode->removeOccupant(this);
+
 	delete this;
 }
 
 void Bullet::move() {
-	if (direction == Main::LEFT && currentNode->hasLeft() && currentNode->getLeft()->isAvailable()) {
+	if (direction == Main::LEFT && currentNode->hasLeft() && !currentNode->getLeft()->isFull()) {
 		currentNode->removeOccupant(this);
 		currentNode = currentNode->getLeft();
 		currentNode->addOccupant(this);
-	} else if (direction == Main::RIGHT && currentNode->hasRight() && currentNode->getRight()->isAvailable()) {
+	} else if (direction == Main::RIGHT && currentNode->hasRight() && !currentNode->getRight()->isFull()) {
 		currentNode->removeOccupant(this);
 		currentNode = currentNode->getRight();
 		currentNode->addOccupant(this);

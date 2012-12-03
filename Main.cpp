@@ -33,6 +33,13 @@ int Main::logAddress = 48;
 list<Bullet*> Main::bullets;
 vector<Node*> Main::nodes;
 
+VirtualNode* Main::leftNode;
+VirtualNode* Main::rightNode;
+
+bool Main::activated = false;
+int Main::leftActivated = 0;
+int Main::rightActivated = 0;
+
 Main::Main() {
 }
 
@@ -48,8 +55,8 @@ void Main::begin() {
 	pinMode(Button2, INPUT);
 	pinMode(Status, OUTPUT);
 
-	Node *leftNode = new VirtualNode(hardSerial);
-	Node *rightNode = new VirtualNode(softSerial);
+	leftNode = new VirtualNode(hardSerial);
+	rightNode = new VirtualNode(softSerial);
 
 	// Create nodes for each led
 	for (int i = 0; i <= nLeds + 1; i++) {
@@ -75,6 +82,23 @@ void Main::ping() {
 		}
 
 		lastSmallUpdate = millis();
+
+		if (digitalRead(Button1)) {
+			if (!activated) {
+				//String message = "~A";
+				//message.concat((char) 1);
+				broadcast("~A1");
+				activated = true;
+			}
+		} else {
+			if (activated) {
+				//String message = "~A";
+				//message.concat((char) 0);
+				broadcast("~A0");
+				activated = false;
+			}
+		}
+
 	}
 
 	if (lastBigUpdate + bigInterval < millis()) {
@@ -82,16 +106,26 @@ void Main::ping() {
 			(*iterator)->ping();
 		}
 
-		if (digitalRead(Button1) == HIGH) {
-			bullets.push_back(new Bullet(nodes[1], RIGHT, 255));
-		}
-
 		if (digitalRead(Button2) == HIGH) {
-			bullets.push_back(new Bullet(nodes[nLeds], LEFT, 255));
+			bullets.push_back(new Bullet(nodes[3], LEFT, 255));
+			bullets.push_back(new Bullet(nodes[4], RIGHT, 255));
 		}
 
 		lastBigUpdate = millis();
 	}
+}
+
+void Main::send(String message, Direction d) {
+	if (d == LEFT) {
+		leftNode->send(message);
+	} else {
+		rightNode->send(message);
+	}
+}
+
+void Main::broadcast(String message) {
+	send(message, LEFT);
+	send(message, RIGHT);
 }
 
 void Main::log(const char* message) {

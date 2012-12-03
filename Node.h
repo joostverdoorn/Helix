@@ -29,7 +29,7 @@ public:
 	virtual ~Node();
 
 	virtual void ping() = 0;
-	virtual bool isAvailable() = 0;
+	virtual bool isFull() = 0;
 
 	virtual void setLeft(Node*);
 	virtual void setRight(Node*);
@@ -41,7 +41,7 @@ public:
 	bool hasRight();
 
 	virtual void addOccupant(Bullet*);
-	void removeOccupant(Bullet*);
+	virtual void removeOccupant(Bullet*);
 
 	bool isEmpty();
 };

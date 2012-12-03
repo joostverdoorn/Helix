@@ -20,6 +20,7 @@
 
 class Bullet;
 class Node;
+class VirtualNode;
 
 using namespace std;
 
@@ -46,6 +47,8 @@ public:
 	static void log();
 	static int freeRam();
 
+	static void send(String, Direction);
+	static void broadcast(String);
 
 	static long baudRate;
 	static SoftwareSerial *softSerial;
@@ -67,6 +70,13 @@ public:
 
 	static list<Bullet*> bullets;
 	static vector<Node*> nodes;
+
+	static VirtualNode* leftNode;
+	static VirtualNode* rightNode;
+
+	static bool activated;
+	static int leftActivated;
+	static int rightActivated;
 
 private:
 	Main();

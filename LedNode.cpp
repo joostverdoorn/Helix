@@ -21,44 +21,73 @@ LedNode::~LedNode() {
 }
 
 void LedNode::emit() {
-	if(targetBrightness > brightness) {
-		brightness += 4 * deltaBrightness;
-	} else if(targetBrightness < brightness) {
-		brightness -= deltaBrightness;
+	float diff = targetBrightness - brightness;
+
+	if (targetBrightness > brightness) {
+		brightness += diff / 40;
+	} else if (targetBrightness < brightness) {
+		brightness += diff / 100;
 	}
 
-	analogWrite(ledPin, (uint8_t) brightness);
+	/*if (targetBrightness > brightness) {
+	 if (brightness < 1) {
+	 brightness = 1;
+	 }
+
+
+	 brightness *= 1.05;
+
+	 if (brightness > 255) {
+	 brightness = 255;
+	 }
+	 } else if (targetBrightness < brightness) {
+	 brightness /= 1.01;
+
+	 if (brightness < 1) {
+	 brightness = 0;
+	 }
+
+	 if (brightness < 0) {
+	 brightness = 0;
+	 }
+	 }*/
+
+	analogWrite(ledPin, brightness);
 }
 
 void LedNode::ping() {
-	if (isEmpty()) {
-		targetBrightness = 0;
 
+	float b = 0;
+
+	if (Main::activated || Main::leftActivated > 0 || Main::rightActivated > 0) {
+		digitalWrite(13, HIGH);
 	} else {
-		//int targetBrightness = 0;
-
-		float b = 0;
-
-		for (list<Bullet*>::const_iterator iterator = occupants.begin();
-				iterator != occupants.end(); iterator++) {
-			b += (*iterator)->getMagnitude();
-		}
-
-		if (b > 255) {
-			b = 255;
-		}
-
-		targetBrightness = b;
+		digitalWrite(13, LOW);
 	}
+
+	if ((Main::activated && Main::leftActivated > 0) || (Main::activated && Main::rightActivated > 0)
+			|| (Main::leftActivated > 0 && Main::rightActivated > 0)) {
+		b += 30;
+	}
+
+	for (list<Bullet*>::const_iterator iterator = occupants.begin(); iterator != occupants.end(); iterator++) {
+		b += (*iterator)->getMagnitude();
+	}
+
+	if (b > 255) {
+		b = 255;
+	}
+
+	targetBrightness = b;
 
 	emit();
 }
 
-bool LedNode::available() {
+bool LedNode::isFull() {
 	if (maxOccupants == 0 || maxOccupants >= occupants.size() + 1) {
-		return true;
-	} else {
 		return false;
+	} else {
+		return true;
 	}
 }
 
