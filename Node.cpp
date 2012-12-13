@@ -11,7 +11,7 @@
 
 using namespace std;
 
-int Node::maxOccupants = 0;
+uint8_t Node::maxOccupants = 0;
 
 Node::Node() {
 	left = 0;

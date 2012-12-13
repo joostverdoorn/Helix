@@ -9,22 +9,14 @@
 #include "VirtualNode.h"
 #include "Bullet.h"
 
+const char* VirtualNode::packetStart = "<<";
+const char* VirtualNode::packetEnd = ">>";
+
 VirtualNode::VirtualNode(Stream *s) {
 	stream = s;
 	neighbour = 0;
 
-	lastUpdate = millis();
-	interval = 500;
-
 	full = false;
-
-	packetStart = "";
-	packetStart.concat((char) 60);
-	packetStart.concat((char) 60);
-
-	packetEnd = "";
-	packetEnd.concat((char) 62);
-	packetEnd.concat((char) 62);
 }
 
 VirtualNode::~VirtualNode() {
@@ -52,7 +44,7 @@ void VirtualNode::ping() {
 		case '!':
 			switch (arg1) {
 			case 'O':
-				Main::bullets.push_back(new Bullet(neighbour, direction, in.charAt(2)));
+				Main::bullets.push_back(new Bullet(neighbour, direction, new Colour(in.charAt(2), in.charAt(3), in.charAt(4))));
 				break;
 
 			case 'F':
@@ -130,7 +122,7 @@ String VirtualNode::receive() {
 }
 
 bool VirtualNode::isFull() {
-	return false;
+	return full;
 }
 
 void VirtualNode::setLeft(Node *u) {
@@ -153,7 +145,9 @@ void VirtualNode::setRight(Node *u) {
 
 void VirtualNode::addOccupant(Bullet *b) {
 	String message = "!O";
-	message.concat((char) b->getMagnitude());
+	message.concat((char) b->getColour()->red);
+	message.concat((char) b->getColour()->green);
+	message.concat((char) b->getColour()->blue);
 
 	send(message);
 	b->die();

@@ -8,11 +8,18 @@
 #ifndef COLOUR_H_
 #define COLOUR_H_
 
+#include <Arduino.h>
+
 class Colour {
-	int red, green, blue;
-	
-	public:
-		Colour(int, int, int);
+
+public:
+	Colour(uint8_t, uint8_t, uint8_t);
+	void setRGB(uint8_t, uint8_t, uint8_t);
+	uint8_t getMagnitude();
+
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
 };
 
 #endif /* COLOUR_H_ */

@@ -21,7 +21,7 @@ protected:
 	Node* left;
 	Node* right;
 
-	static int maxOccupants;
+	static uint8_t maxOccupants;
 	list<Bullet*> occupants;
 
 public:

@@ -18,10 +18,6 @@ class Main;
 class VirtualNode: public Node {
 
 public:
-	typedef enum State {
-		NORMAL, AVAILABLE_REQUEST_SENT
-	} State;
-
 	VirtualNode(Stream*);
 	virtual ~VirtualNode();
 
@@ -37,23 +33,20 @@ public:
 	void send(String message);
 
 private:
+	static const char* packetStart;
+	static const char* packetEnd;
+
 	Stream *stream;
 	Node *neighbour;
 
 	Main::Direction direction;
-	State state;
 
 	bool isFull();
-	long lastUpdate;
-	int interval;
 
 	bool available();
 	String receive();
 
 	String input;
-	String packetStart;
-	String packetEnd;
-
 };
 
 #endif /* VIRTUALNODE_H_ */

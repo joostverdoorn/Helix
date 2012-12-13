@@ -17,20 +17,19 @@ using namespace std;
 class Bullet;
 
 class LedNode: public Node {
-	int ledPin;
-
 	float brightness;
-	float deltaBrightness;
-	float targetBrightness;
+	Colour* colour;
 
 public:
 	LedNode(int);
+	LedNode();
 	virtual ~LedNode();
 
 	void ping();
 	bool isFull();
 
-	void emit();
+	Colour* getColour();
+	uint8_t getBrightness();
 };
 
 #endif /* LEDNODE_H_ */

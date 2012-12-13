@@ -10,14 +10,22 @@
 #include <vector>
 #include "Bullet.h"
 
-Bullet::Bullet(Node *h, Main::Direction d, uint8_t m) {
+uint8_t Bullet::decay = 90;
+
+Bullet::Bullet(Node *h, Main::Direction d) {
 	currentNode = h;
 	direction = d;
-	magnitude = m;
-
-	decay = .9;
 
 	currentNode->addOccupant(this);
+	colour = new Colour(254, 0, 254);
+}
+
+Bullet::Bullet(Node *h, Main::Direction d, Colour* c) {
+	currentNode = h;
+	direction = d;
+
+	currentNode->addOccupant(this);
+	colour = c;
 }
 
 Bullet::~Bullet() {
@@ -25,9 +33,14 @@ Bullet::~Bullet() {
 }
 
 void Bullet::ping() {
-	magnitude *= decay;
+	// Decay a little
+	//uint8_t red = (float) colour->red * ((float) decay / 100.0F);
+	//uint8_t green = (float) colour->red * ((float) decay / 100.0F);
+	//uint8_t blue = (float) colour->red * ((float) decay / 100.0F);
 
-	if (magnitude < 1) {
+	//colour->setRGB(red, green, blue);
+
+	if (getMagnitude() < 3) {
 		die();
 	} else {
 		move();
@@ -37,6 +50,8 @@ void Bullet::ping() {
 void Bullet::die() {
 	Main::bullets.remove(this);
 	currentNode->removeOccupant(this);
+
+	delete colour;
 
 	delete this;
 }
@@ -53,7 +68,11 @@ void Bullet::move() {
 	}
 }
 
-int Bullet::getMagnitude() {
-	return magnitude;
+Colour* Bullet::getColour() {
+	return colour;
+}
+
+uint8_t Bullet::getMagnitude() {
+	return colour->getMagnitude();
 }
 

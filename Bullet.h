@@ -24,19 +24,23 @@ class Bullet {
 private:
 	Node* currentNode;
 	Main::Direction direction;
-	uint8_t magnitude;
-	float decay;
+
+	Colour* colour;
 
 	void move();
 
+	static uint8_t decay; // is a percentage.. smaller than a float!
+
 public:
-	Bullet(Node*, Main::Direction, uint8_t);
+	Bullet(Node*, Main::Direction);
+	Bullet(Node*, Main::Direction, Colour*);
 	virtual ~Bullet();
 
 	void ping();
 	void die();
 
-	int getMagnitude();
+	uint8_t getMagnitude();
+	Colour* getColour();
 };
 
 #endif /* BULLET_H_ */
