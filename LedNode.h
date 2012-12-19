@@ -18,17 +18,16 @@ class Bullet;
 
 class LedNode: public Node {
 	float brightness;
-	Colour* colour;
+	Colour colour;
 
 public:
-	LedNode(int);
 	LedNode();
 	virtual ~LedNode();
 
 	void ping();
 	bool isFull();
 
-	Colour* getColour();
+	Colour getColour();
 	uint8_t getBrightness();
 };
 

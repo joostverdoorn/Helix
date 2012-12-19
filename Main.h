@@ -11,7 +11,7 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
-//#include "/usr/share/arduino/libraries/Wire/Wire.h"
+#include "CapacitiveSensor.h"
 
 #include <StandardCplusplus.h>
 #include <vector>
@@ -24,79 +24,77 @@ class LedNode;
 class CapacitiveSensor;
 class Colour;
 
-using namespace std;
+namespace Main {
+typedef enum Direction {
+	LEFT, RIGHT
+} Direction;
 
-class Main {
-public:
-	typedef enum Direction {
-		LEFT, RIGHT
-	} Direction;
+typedef enum Pins {
+	SoftRX = 2, SoftTX = 3,
 
-	typedef enum Pins {
-		SoftRX = 2, SoftTX = 3,
+	Button1 = 8, Button2 = 9,
 
-		Button1 = 8, Button2 = 9,
+	Status = 13,
 
-		Status = 13,
+	LedData = 4, LedClock = 5, TouchOut = 6, TouchIn = 7,
 
-		LedData = 4, LedClock = 5, TouchOut = 6, TouchIn = 7,
+} Pins;
 
-	} Pins;
+extern void begin();
+extern void ping();
 
-	virtual ~Main();
+static void log();
+static int freeRam();
 
-	static void begin();
-	static void ping();
+extern void send(const unsigned char*, uint8_t, Direction);
+static void broadcast(const unsigned char*, uint8_t);
 
-	static void log();
-	static int freeRam();
+static void slowShiftOut(uint8_t);
+static void writeByte(uint8_t);
+static void writeGuard();
+static void writeFrame(LedNode*);
+static void writeFrame();
+static void pushStrip();
+static void pingStrip();
 
-	static void send(String, Direction);
-	static void broadcast(String);
+extern std::list<Bullet*> bullets;
+extern std::vector<LedNode*> nodes;
 
-	static void slowShiftOut(uint8_t);
-	static void writeByte(uint8_t);
-	static void writeGuard();
-	static void writeFrame(LedNode*);
-	static void writeFrame();
-	static void pushStrip();
-	static void pingStrip();
+extern bool activated;
+extern uint8_t leftActivated;
+extern uint8_t rightActivated;
 
-	static uint16_t baudRate;
-	static SoftwareSerial *softSerial;
-	static HardwareSerial *hardSerial;
+extern Colour* activatedColour;
+extern Colour* baseColour;
 
-	static unsigned long lastSmallUpdate;
-	static unsigned long lastBigUpdate;
-	static unsigned long lastGiantUpdate;
-	static uint8_t ledDelay;
-	static uint8_t smallInterval;
-	static uint8_t bigInterval;
-	static uint16_t giantInterval;
+//static
+/*static uint16_t baudRate;
+ static SoftwareSerial *softSerial;
+ static HardwareSerial *hardSerial;
 
-	static bool pushing;
+ static unsigned long lastSmallUpdate;
+ static unsigned long lastBigUpdate;
+ static unsigned long lastGiantUpdate;
+ static uint8_t ledDelay;
+ static uint8_t smallInterval;
+ static uint8_t bigInterval;
+ static uint16_t giantInterval;
 
-	static uint8_t nLeds;
+ static bool pushing;
 
-	static list<Bullet*> bullets;
-	static vector<LedNode*> nodes;
+ static uint8_t nLeds;
 
-	static VirtualNode* leftNode;
-	static VirtualNode* rightNode;
 
-	static bool activated;
-	static uint8_t leftActivated;
-	static uint8_t rightActivated;
 
-	static list<uint8_t> soundLevels;
-	static CapacitiveSensor touchSensor;
+ static VirtualNode* leftNode;
+ static VirtualNode* rightNode;
 
-	static Colour* activatedColour;
-	static Colour* baseColour;
 
-private:
-	Main();
 
-};
+ static std::list<uint8_t> soundLevels;
+ static CapacitiveSensor touchSensor;
+
+ ;/**/
+}
 
 #endif /* MAIN_H_ */

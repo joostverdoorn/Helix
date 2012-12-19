@@ -8,6 +8,10 @@
 #include <Arduino.h>
 #include "Colour.h"
 
+Colour::Colour() {
+	setRGB(0, 0, 0);
+}
+
 Colour::Colour(uint8_t r, uint8_t g, uint8_t b) {
 	setRGB(r, g, b);
 }

@@ -11,9 +11,7 @@
 #include "Main.h"
 #include "Node.h"
 #include "Bullet.h"
-#include "/usr/share/arduino/libraries/SoftwareSerial/SoftwareSerial.h"
-
-class Main;
+#include <SoftwareSerial.h>
 
 class VirtualNode: public Node {
 
@@ -30,11 +28,13 @@ public:
 	void addOccupant(Bullet*);
 	void removeOccupant(Bullet*);
 
-	void send(String message);
+	void send(const unsigned char*, uint8_t size);
+	const unsigned char* receive();
 
 private:
-	static const char* packetStart;
-	static const char* packetEnd;
+	static char packetStart[2];
+	static char packetEnd[2];
+	static vector<char> input;
 
 	Stream *stream;
 	Node *neighbour;
@@ -44,9 +44,6 @@ private:
 	bool isFull();
 
 	bool available();
-	String receive();
-
-	String input;
 };
 
 #endif /* VIRTUALNODE_H_ */

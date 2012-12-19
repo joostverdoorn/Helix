@@ -10,6 +10,8 @@
 #include <vector>
 #include "Bullet.h"
 
+using namespace std;
+
 uint8_t Bullet::decay = 90;
 
 Bullet::Bullet(Node *h, Main::Direction d) {
@@ -17,10 +19,10 @@ Bullet::Bullet(Node *h, Main::Direction d) {
 	direction = d;
 
 	currentNode->addOccupant(this);
-	colour = new Colour(254, 0, 254);
+	colour = Colour(254, 1, 254);
 }
 
-Bullet::Bullet(Node *h, Main::Direction d, Colour* c) {
+Bullet::Bullet(Node *h, Main::Direction d, Colour c) {
 	currentNode = h;
 	direction = d;
 
@@ -51,7 +53,7 @@ void Bullet::die() {
 	Main::bullets.remove(this);
 	currentNode->removeOccupant(this);
 
-	delete colour;
+	//delete colour;
 
 	delete this;
 }
@@ -68,11 +70,11 @@ void Bullet::move() {
 	}
 }
 
-Colour* Bullet::getColour() {
+Colour Bullet::getColour() {
 	return colour;
 }
 
 uint8_t Bullet::getMagnitude() {
-	return colour->getMagnitude();
+	return colour.getMagnitude();
 }
 

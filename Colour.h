@@ -14,6 +14,7 @@ class Colour {
 
 public:
 	Colour(uint8_t, uint8_t, uint8_t);
+	Colour();
 	void setRGB(uint8_t, uint8_t, uint8_t);
 	uint8_t getMagnitude();
 

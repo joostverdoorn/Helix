@@ -10,7 +10,7 @@
 
 LedNode::LedNode() {
 	brightness = 0;
-	colour = Main::baseColour;
+	colour = *Main::baseColour;
 }
 
 LedNode::~LedNode() {
@@ -41,10 +41,10 @@ void LedNode::ping() {
 
 	if(!isEmpty()) {
 		colour = occupants.front()->getColour();
-	} else if(Main::activated) {
-		colour = Main::activatedColour;
+	} else if(Main::activated || (Main::leftActivated > 0 && Main::rightActivated > 0)) {
+		colour = *Main::activatedColour;
 	} else {
-		colour = Main::baseColour;
+		colour = *Main::baseColour;
 	}
 }
 
@@ -60,7 +60,7 @@ uint8_t LedNode::getBrightness() {
 	return brightness;
 }
 
-Colour* LedNode::getColour() {
+Colour LedNode::getColour() {
 	return colour;
 }
 

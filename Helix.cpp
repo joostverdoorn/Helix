@@ -14,7 +14,6 @@ void setup() {
 	Main::begin();
 }
 
-
 void loop() {
 	Main::ping();
 }

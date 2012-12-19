@@ -6,11 +6,18 @@
  */
 
 #include <Arduino.h>
+#include <StandardCplusplus.h>
+#include <algorithm>
 #include "VirtualNode.h"
 #include "Bullet.h"
+#include "Main.h"
 
-const char* VirtualNode::packetStart = "<<";
-const char* VirtualNode::packetEnd = ">>";
+using namespace std;
+using Main::bullets;
+
+char VirtualNode::packetStart[2] = { '<', '<' };
+char VirtualNode::packetEnd[2] = { '>', '>' };
+vector<char> VirtualNode::input;
 
 VirtualNode::VirtualNode(Stream *s) {
 	stream = s;
@@ -24,19 +31,18 @@ VirtualNode::~VirtualNode() {
 
 void VirtualNode::ping() {
 
-	String in = receive();
+	const unsigned char* in = receive();
 	if (in != NULL) {
 
-		char op = in.charAt(0);
-		char arg1 = in.charAt(1);
+		char op = in[0];
+		char arg1 = in[1];
 
 		switch (op) {
 		case '?':
 			switch (arg1) {
 			case 'F':
-				String message = "!F";
-				message.concat(neighbour->isFull() ? '1' : '0');
-				send(message);
+				unsigned char message[3] = { '!', 'F', (char) neighbour->isFull() };
+				send(message, 3);
 				break;
 			}
 			break;
@@ -44,11 +50,11 @@ void VirtualNode::ping() {
 		case '!':
 			switch (arg1) {
 			case 'O':
-				Main::bullets.push_back(new Bullet(neighbour, direction, new Colour(in.charAt(2), in.charAt(3), in.charAt(4))));
+				Main::bullets.push_back(new Bullet(neighbour, direction, Colour(in[2], in[3], in[4])));
 				break;
 
 			case 'F':
-				if(in.charAt(2) == '1') {
+				if (in[2] == '1') {
 					full = true;
 				} else {
 					full = false;
@@ -59,23 +65,18 @@ void VirtualNode::ping() {
 			break;
 
 		case '~':
-			Main::send(in, direction);
-
 			switch (arg1) {
 			case 'A':
-				if (in.charAt(2) == '1') {
-					digitalWrite(13, HIGH);
-					if (direction == Main::LEFT) {
-						Main::rightActivated++;
-					} else {
-						Main::leftActivated++;
-					}
+				if (direction == Main::LEFT) {
+					Main::rightActivated = in[2];
+
+					const unsigned char message[3] = { '~', 'A', Main::rightActivated + Main::activated };
+					Main::send(message, 3, Main::LEFT);
 				} else {
-					if (direction == Main::LEFT) {
-						Main::rightActivated--;
-					} else {
-						Main::leftActivated--;
-					}
+					Main::leftActivated = in[2];
+
+					const unsigned char message[3] = { '~', 'A', Main::leftActivated + Main::activated };
+					Main::send(message, 3, Main::RIGHT);
 				}
 				break;
 			}
@@ -88,37 +89,47 @@ bool VirtualNode::available() {
 	return stream->available();
 }
 
-void VirtualNode::send(String message) {
-	String output = packetStart;
-	output.concat((char) message.length());
-	output.concat(message);
-	output.concat(packetEnd);
-
-	stream->print(output);
+void VirtualNode::send(const unsigned char *message, uint8_t size) {
+	stream->write(packetStart[0]);
+	stream->write(packetStart[1]);
+	stream->write(size);
+	for (int i = 0; i < size; i++) {
+		stream->write(message[i]);
+	}
+	stream->write(packetEnd[0]);
+	stream->write(packetEnd[1]);
 }
 
-String VirtualNode::receive() {
+const unsigned char* VirtualNode::receive() {
 	while (stream->available()) {
-		input.concat((char) stream->read());
+		input.push_back(stream->read());
 	}
 
-	String packet;
+	uint8_t packetStartSize = sizeof(packetStart) / sizeof(char);
+	uint8_t packetEndSize = sizeof(packetEnd) / sizeof(char);
 
-	int startPos = input.indexOf(packetStart);
-	int endPos = input.indexOf(packetEnd, startPos);
+	if (input.size() > +packetStartSize + packetEndSize + 1) {
+		vector<char>::iterator startPos = find(input.begin(), input.end(), packetStart[0]);
+		if (startPos != input.end() && *(startPos + 1) == packetStart[1]) {
+			uint8_t packetSize = *(startPos + packetStartSize);
 
-	if (endPos != -1) {
-		int length = input.charAt(startPos + 2);
+			if (*(startPos + packetStartSize + 1 + packetSize) == packetEnd[0] && *(startPos + packetStartSize + 1 + packetSize + 1) == packetEnd[1]) {
+				unsigned char packet[packetSize];
 
-		if (endPos == startPos + 3 + length) {
-			packet = input.substring(startPos + 3, endPos);
+				for (uint8_t i = 0; i < packetSize; i++) {
+					packet[i] = *(startPos + packetStartSize + 1 + i);
+				}
+
+				input.erase(input.begin(), startPos + packetStartSize + 1 + packetSize + 1);
+				return packet;
+
+			}
+		} else if (input.size() > 8 && startPos == input.end()) {
+			input.clear();
 		}
-
-		input = input.substring(endPos + 2);
-		return packet;
-	} else {
-		return NULL;
 	}
+
+	return NULL;
 }
 
 bool VirtualNode::isFull() {
@@ -144,12 +155,8 @@ void VirtualNode::setRight(Node *u) {
 }
 
 void VirtualNode::addOccupant(Bullet *b) {
-	String message = "!O";
-	message.concat((char) b->getColour()->red);
-	message.concat((char) b->getColour()->green);
-	message.concat((char) b->getColour()->blue);
-
-	send(message);
+	const unsigned char message[5] = { '!', 'O', b->getColour().red, b->getColour().green, b->getColour().blue };
+	send(message, 5);
 	b->die();
 }
 

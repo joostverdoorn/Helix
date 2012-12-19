@@ -12,62 +12,49 @@
 #include "Bullet.h"
 #include "CapacitiveSensor.h"
 #include "TimerOne.h"
+#include "MemoryFree.h"
+#include "fix_fft.h"
 
 extern HardwareSerial Serial;
 
-uint8_t Main::nLeds = 12;
+namespace Main {
 
-unsigned long Main::lastSmallUpdate = millis();
-unsigned long Main::lastBigUpdate = millis();
-unsigned long Main::lastGiantUpdate = millis();
-uint8_t Main::ledDelay = 1;
-uint8_t Main::smallInterval = 1;
-uint8_t Main::bigInterval = 60;
-uint16_t Main::giantInterval = 500;
+uint8_t nLeds = 12;
 
-bool Main::pushing = false;
+unsigned long lastSmallUpdate = millis();
+unsigned long lastBigUpdate = millis();
+unsigned long lastGiantUpdate = millis();
+uint8_t ledDelay = 1;
+uint8_t smallInterval = 1;
+uint8_t bigInterval = 60;
+uint16_t giantInterval = 500;
 
-uint16_t Main::baudRate = 4800;
-HardwareSerial *Main::hardSerial = &Serial;
-SoftwareSerial *Main::softSerial = new SoftwareSerial(SoftRX, SoftTX);
+bool pushing = false;
 
-//TwoWire *Main::logSerial = &Wire;
-//int Main::logAddress = 48;
+uint16_t baudRate = 57600;
+HardwareSerial *hardSerial = &Serial;
+SoftwareSerial *softSerial = new SoftwareSerial(SoftRX, SoftTX);
 
-list<Bullet*> Main::bullets;
-vector<LedNode*> Main::nodes;
+list<Bullet*> bullets;
+vector<LedNode*> nodes;
 
-VirtualNode* Main::leftNode;
-VirtualNode* Main::rightNode;
+VirtualNode* leftNode;
+VirtualNode* rightNode;
 
-bool Main::activated = false;
-uint8_t Main::leftActivated = 0;
-uint8_t Main::rightActivated = 0;
+bool activated = false;
+uint8_t leftActivated = 0;
+uint8_t rightActivated = 0;
 
-list<uint8_t> Main::soundLevels;
-CapacitiveSensor Main::touchSensor = CapacitiveSensor(TouchOut, TouchIn);
+list<uint8_t> soundLevels;
+CapacitiveSensor touchSensor = CapacitiveSensor(TouchOut, TouchIn);
 
-Colour* Main::activatedColour;
-Colour* Main::baseColour;
+Colour* activatedColour;
+Colour* baseColour;
 
-/*void Main::log(const char* message) {
- //logSerial->beginTransmission(logAddress);
- //logSerial->println(message);
- //logSerial->endTransmission();
- }*/
-
-Main::Main() {
-}
-
-Main::~Main() {
-}
-
-void Main::begin() {
-	Serial.println(freeRam());
+void begin() {
 	hardSerial->begin(baudRate);
 	softSerial->begin(baudRate);
 	//logSerial->begin();
-	Serial.println(freeRam());
 
 	pinMode(Button1, INPUT);
 	pinMode(Button2, INPUT);
@@ -81,7 +68,7 @@ void Main::begin() {
 
 	touchSensor.set_CS_AutocaL_Millis(0xFFFFFFFF);
 
-	activatedColour = new Colour(0, 30, 40);
+	activatedColour = new Colour(10, 10, 10);
 	baseColour = new Colour(0, 0, 0);
 
 	// Create nodes for each led
@@ -99,15 +86,11 @@ void Main::begin() {
 
 	rightNode->setLeft(nodes[nLeds - 1]);
 
-
 	Timer1.initialize(32);
 	Timer1.attachInterrupt(pingStrip);
 }
 
-void Main::ping() {
-	// Hammer the clock
-	//pingStrip();
-
+void ping() {
 	if (lastSmallUpdate + smallInterval < millis()) {
 		// Ping all LedNodes
 		for (int i = 0; i < nodes.size(); i++) {
@@ -120,7 +103,7 @@ void Main::ping() {
 
 		// Determine soundlevels
 		uint8_t level = abs(analogRead(A0) - 512) / 2;
-		if(soundLevels.size() >= 5) {
+		if (soundLevels.size() >= 5) {
 			soundLevels.pop_front();
 		}
 		soundLevels.push_back(level);
@@ -144,51 +127,124 @@ void Main::ping() {
 				level += *iterator / soundLevels.size();
 			}
 
-			Serial.println(level);
+			if (level > 60) {
+				char data[128];
 
-			if(level > 60) {
-				bullets.push_back(new Bullet(nodes[nodes.size() / 2 - 1], LEFT));
-				bullets.push_back(new Bullet(nodes[nodes.size() / 2 ], RIGHT));
+				for (uint8_t i = 0; i < 128; i++) {
+					uint16_t val = analogRead(A0);  //This will fill the buffer with 128 samples in the form of instantaneous voltage
+
+					data[i] = val / 4 - 128;      //This rescales data from 0-1023 to -128 to +128; required to be 8-bit char; and places in the CHAR data array
+												  //note that rounding error is introduced by the scaling; the program rounds down, even negative numbers
+
+				}
+
+				fix_fftr(data, 7, 0);
+
+				for (int i = 0; i < 64; i++) { //This will only return the absolute value of the transformation; the second 64 values are identical to the first.
+					data[i] = sqrt((data[i] * data[i] * 2));  //convert data to RMS and place it back in data
+				}
+
+				uint8_t bands[8];
+
+				uint8_t maxI = 0;
+				uint8_t max = 0;
+
+				for (uint8_t i = 0; i < 8; i++) {
+					bands[i] = 0;
+					for (uint8_t j = 0; j < 8; j++) {
+						bands[i] += data[i + j + 2];
+					}
+
+					if (bands[i] > max) {
+						max = bands[i];
+						maxI = i;
+					}
+				}
+
+				Colour c;
+
+				switch (maxI) {
+				case 0:
+					c = Colour(254, 0, 0);
+					break;
+				case 1:
+					c = Colour(254, 128, 0);
+					break;
+				case 2:
+					c = Colour(128, 254, 0);
+					break;
+				case 3:
+					c = Colour(0, 254, 0);
+					break;
+				case 4:
+					c = Colour(0, 254, 254);
+					break;
+				case 5:
+					c = Colour(0, 0, 254);
+					break;
+				case 6:
+					c = Colour(128, 0, 254);
+					break;
+				case 7:
+					c = Colour(254, 0, 128);
+					break;
+				}
+
+				bullets.push_back(new Bullet(nodes[nodes.size() / 2 - 1], LEFT, c));
+				bullets.push_back(new Bullet(nodes[nodes.size() / 2], RIGHT, c));
 			}
 
 		}
-
-		//Serial.println("blaat");
-
+		//Serial.println(freeMemory());
 		lastBigUpdate = millis();
 	}
 
 	if (lastGiantUpdate + giantInterval < millis()) {
-		//Serial.println(touchSensor.capacitiveSensor(10));
+		int level = touchSensor.capacitiveSensor(10);
 
-		//Serial.println("Wadup");
-		if (touchSensor.capacitiveSensor(10) > 300) {
+		if (level > 300) {
 			if (!activated) {
 				activated = true;
+
+				//unsigned char message[3] = { '~', 'A', rightActivated + 1 };
+				//send(message, 3, LEFT);
+
+				//message[2] = leftActivated + 1;
+				//send(message, 3, RIGHT);
 			}
 		} else {
 			if (activated) {
 				activated = false;
+
+				//unsigned char message[3] = { '~', 'A', rightActivated };
+				//send(message, 3, LEFT);
+
+				//message[2] = leftActivated;
+				//send(message, 3, RIGHT);
 			}
 		}
 		lastGiantUpdate = millis();
+
+		//Serial.println(freeMemory());
+		//Serial.println(bullets.size());
+		//Serial.println(sizeof(Colour));
 	}
 }
 
-void Main::send(String message, Direction d) {
+void send(const unsigned char *message, uint8_t size, Direction d) {
 	if (d == LEFT) {
-		leftNode->send(message);
+		leftNode->send(message, size);
 	} else {
-		rightNode->send(message);
+		rightNode->send(message, size);
 	}
 }
 
-void Main::broadcast(String message) {
-	send(message, LEFT);
-	send(message, RIGHT);
+void broadcast(const unsigned char* message, uint8_t size) {
+	send(message, size, LEFT);
+	send(message, size, RIGHT);
 }
 
-void Main::slowShiftOut(uint8_t val) {
+void slowShiftOut(uint8_t val) {
 	for (uint8_t i = 0; i < 8; i++) {
 		digitalWrite(LedData, !!(val & (1 << (7 - i))));
 		delayMicroseconds(ledDelay);
@@ -201,11 +257,11 @@ void Main::slowShiftOut(uint8_t val) {
 	}
 }
 
-void Main::writeByte(uint8_t b) {
+void writeByte(uint8_t b) {
 	slowShiftOut(b);
 }
 
-void Main::writeGuard() {
+void writeGuard() {
 	digitalWrite(LedClock, HIGH);
 	digitalWrite(LedData, 0);
 	delayMicroseconds(ledDelay);
@@ -217,21 +273,21 @@ void Main::writeGuard() {
 	writeByte(0xff);
 }
 
-void Main::writeFrame() {
+void writeFrame() {
 	writeByte(0); 	//G
 	writeByte(0);	//B
 	writeByte(0);	//R
 }
 
-void Main::writeFrame(LedNode* u) {
-	Colour* c = u->getColour();
+void writeFrame(LedNode* u) {
+	Colour c = u->getColour();
 
-	writeByte(c->green); 	//G
-	writeByte(c->blue);	//B
-	writeByte(c->red);	//R
+	writeByte(c.green); 	//G
+	writeByte(c.blue);	//B
+	writeByte(c.red);	//R
 }
 
-void Main::pushStrip() {
+void pushStrip() {
 	pushing = true;
 	for (int i = 49; i >= 0; i--) {
 		if (i < nLeds) {
@@ -245,20 +301,19 @@ void Main::pushStrip() {
 	pushing = false;
 }
 
-void Main::pingStrip() {
-	if(!pushing) {
+void pingStrip() {
+	if (!pushing) {
 		digitalWrite(LedClock, HIGH);
 		delayMicroseconds(ledDelay);
 
 		digitalWrite(LedClock, LOW);
 		delayMicroseconds(ledDelay);
 	}
-
-	//Serial.println("bla");
 }
 
-int Main::freeRam() {
-	extern int __heap_start, *__brkval;
+int freeRam() {
+	int __heap_start, *__brkval;
 	int v;
 	return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+}
 }

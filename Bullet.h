@@ -25,22 +25,22 @@ private:
 	Node* currentNode;
 	Main::Direction direction;
 
-	Colour* colour;
+	Colour colour;
 
 	void move();
 
-	static uint8_t decay; // is a percentage.. smaller than a float!
+	static uint8_t decay; // is a percentage.. less memory than a float!
 
 public:
 	Bullet(Node*, Main::Direction);
-	Bullet(Node*, Main::Direction, Colour*);
+	Bullet(Node*, Main::Direction, Colour);
 	virtual ~Bullet();
 
 	void ping();
 	void die();
 
 	uint8_t getMagnitude();
-	Colour* getColour();
+	Colour getColour();
 };
 
 #endif /* BULLET_H_ */
