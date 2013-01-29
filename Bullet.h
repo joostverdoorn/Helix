@@ -29,7 +29,7 @@ private:
 
 	void move();
 
-	static uint8_t decay; // is a percentage.. less memory than a float!
+	//static uint8_t decay; // is a percentage.. less memory than a float!
 
 public:
 	Bullet(Node*, Main::Direction);
@@ -39,8 +39,11 @@ public:
 	void ping();
 	void die();
 
-	uint8_t getMagnitude();
+	Node* getNode();
+	void setNode(Node*);
+	uint8_t brightness();
 	Colour getColour();
+	Main::Direction getDirection();
 };
 
 #endif /* BULLET_H_ */

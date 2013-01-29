@@ -11,7 +11,7 @@
 
 using namespace std;
 
-uint8_t Node::maxOccupants = 0;
+uint8_t Node::maxOccupants = 3;
 
 Node::Node() {
 	left = 0;
@@ -54,13 +54,5 @@ bool Node::hasRight() {
 }
 
 void Node::addOccupant(Bullet *b) {
-	occupants.push_back(b);
 }
 
-void Node::removeOccupant(Bullet *b) {
-	occupants.remove(b);
-}
-
-bool Node::isEmpty() {
-	return occupants.size() == 0;
-}

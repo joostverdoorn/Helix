@@ -13,11 +13,9 @@
 #include "Main.h"
 
 using namespace std;
-using Main::bullets;
 
-char VirtualNode::packetStart[2] = { '<', '<' };
-char VirtualNode::packetEnd[2] = { '>', '>' };
-vector<char> VirtualNode::input;
+char VirtualNode::packetStart = '<';
+char VirtualNode::packetEnd = '>';
 
 VirtualNode::VirtualNode(Stream *s) {
 	stream = s;
@@ -31,56 +29,101 @@ VirtualNode::~VirtualNode() {
 
 void VirtualNode::ping() {
 
-	const unsigned char* in = receive();
-	if (in != NULL) {
+	vector<char> in = receive();
+	if (in.size() > 0) {
+		char arg1 = in[0];
 
-		char op = in[0];
-		char arg1 = in[1];
-
-		switch (op) {
-		case '?':
-			switch (arg1) {
-			case 'F':
-				unsigned char message[3] = { '!', 'F', (char) neighbour->isFull() };
-				send(message, 3);
-				break;
+		switch (arg1) {
+		case 'O':
+			if (in.size() >= 4) {
+				Main::addBullet(new Bullet(neighbour, direction, Colour(in[1], in[2], in[3])));
 			}
 			break;
 
-		case '!':
-			switch (arg1) {
-			case 'O':
-				Main::bullets.push_back(new Bullet(neighbour, direction, Colour(in[2], in[3], in[4])));
-				break;
-
-			case 'F':
-				if (in[2] == '1') {
+		case 'F':
+			if (in.size() >= 2) {
+				if (in[1] == 1) {
 					full = true;
 				} else {
 					full = false;
 				}
-				break;
 			}
-
 			break;
-
-		case '~':
-			switch (arg1) {
-			case 'A':
+		case 'A':
+			if (in.size() >= 2) {
 				if (direction == Main::LEFT) {
-					Main::rightActivated = in[2];
+					Main::rightActivated = in[1];
 
-					const unsigned char message[3] = { '~', 'A', Main::rightActivated + Main::activated };
-					Main::send(message, 3, Main::LEFT);
+					vector<char> message;
+					message.push_back('A');
+					message.push_back((char) Main::rightActivated + Main::activated);
+					Main::send(message, Main::LEFT);
 				} else {
-					Main::leftActivated = in[2];
+					Main::leftActivated = in[1];
 
-					const unsigned char message[3] = { '~', 'A', Main::leftActivated + Main::activated };
-					Main::send(message, 3, Main::RIGHT);
+					vector<char> message;
+					message.push_back('A');
+					message.push_back((char) Main::leftActivated + Main::activated);
+					Main::send(message, Main::RIGHT);
 				}
-				break;
 			}
 			break;
+		case 'X': { // Exploration
+			Main::id++;
+			Main::activatedColour = Main::colours[Main::id % 7];
+
+			vector<char> message;
+			message.push_back('X');
+			Main::send(message, Main::LEFT);
+		}
+			break;
+
+		case 'U': // Slumber sensitivity
+			if (in.size() >= 2) {
+				Main::slumberThreshold = in[1];
+
+				vector<char> message;
+				message.push_back('U');
+				message.push_back(in[1]);
+				Main::send(message, direction);
+			}
+			break;
+
+		case 'V': // Pulse sensitivity
+			if (in.size() >= 2) {
+				Main::pulseThreshold = in[1];
+
+				vector<char> message;
+				message.push_back('V');
+				message.push_back(in[1]);
+				Main::send(message, direction);
+			}
+			break;
+
+		case 'W': // Pulse velocity
+			if (in.size() >= 2) {
+				Main::bigInterval = in[1];
+
+				vector<char> message;
+				message.push_back('W');
+				message.push_back(in[1]);
+				Main::send(message, direction);
+			}
+
+			break;
+
+			/*case 'Y':
+			 if (in.size() >= 2) {
+			 Main::id = in[1] + 1;
+			 Main::activatedColour = Main::colours[Main::id % 7];
+
+			 vector<char> message;
+			 message.push_back('Y');
+			 message.push_back((char) Main::id);
+
+			 Main::send(message, Main::RIGHT);
+			 }
+			 break;*/
 		}
 	}
 }
@@ -89,47 +132,41 @@ bool VirtualNode::available() {
 	return stream->available();
 }
 
-void VirtualNode::send(const unsigned char *message, uint8_t size) {
-	stream->write(packetStart[0]);
-	stream->write(packetStart[1]);
-	stream->write(size);
-	for (int i = 0; i < size; i++) {
+void VirtualNode::send(vector<char> message) {
+	stream->write(packetStart);
+
+	for (uint8_t i = 0; i < message.size(); i++) {
 		stream->write(message[i]);
 	}
-	stream->write(packetEnd[0]);
-	stream->write(packetEnd[1]);
+
+	stream->write(packetEnd);
 }
 
-const unsigned char* VirtualNode::receive() {
-	while (stream->available()) {
+vector<char> VirtualNode::receive() {
+	// Insert every item we read into the input vector
+	while (stream->available() > 0) {
 		input.push_back(stream->read());
 	}
 
-	uint8_t packetStartSize = sizeof(packetStart) / sizeof(char);
-	uint8_t packetEndSize = sizeof(packetEnd) / sizeof(char);
+	vector<char> result;
 
-	if (input.size() > +packetStartSize + packetEndSize + 1) {
-		vector<char>::iterator startPos = find(input.begin(), input.end(), packetStart[0]);
-		if (startPos != input.end() && *(startPos + 1) == packetStart[1]) {
-			uint8_t packetSize = *(startPos + packetStartSize);
-
-			if (*(startPos + packetStartSize + 1 + packetSize) == packetEnd[0] && *(startPos + packetStartSize + 1 + packetSize + 1) == packetEnd[1]) {
-				unsigned char packet[packetSize];
-
-				for (uint8_t i = 0; i < packetSize; i++) {
-					packet[i] = *(startPos + packetStartSize + 1 + i);
-				}
-
-				input.erase(input.begin(), startPos + packetStartSize + 1 + packetSize + 1);
-				return packet;
-
+	vector<char>::iterator itStart = find(input.begin(), input.end(), packetStart);
+	if (itStart != input.end()) {
+		vector<char>::iterator itEnd = find(itStart, input.end(), packetEnd);
+		if (itEnd != input.end()) {
+			for (vector<char>::iterator it = itStart + 1; it != itEnd; it++) {
+				result.push_back(*it);
 			}
-		} else if (input.size() > 8 && startPos == input.end()) {
+
+			input.erase(input.begin(), itEnd);
+		} else if (input.end() > itStart + 32) {
 			input.clear();
 		}
+	} else {
+		input.clear();
 	}
+	return result;
 
-	return NULL;
 }
 
 bool VirtualNode::isFull() {
@@ -155,12 +192,13 @@ void VirtualNode::setRight(Node *u) {
 }
 
 void VirtualNode::addOccupant(Bullet *b) {
-	const unsigned char message[5] = { '!', 'O', b->getColour().red, b->getColour().green, b->getColour().blue };
-	send(message, 5);
+	vector<char> message;
+	message.push_back('O');
+	message.push_back((char) b->getColour().red);
+	message.push_back((char) b->getColour().green);
+	message.push_back((char) b->getColour().blue);
+
+	send(message);
 	b->die();
-}
-
-void VirtualNode::removeOccupant(Bullet *b) {
-
 }
 

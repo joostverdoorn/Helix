@@ -21,8 +21,9 @@ protected:
 	Node* left;
 	Node* right;
 
+	bool full;
+
 	static uint8_t maxOccupants;
-	list<Bullet*> occupants;
 
 public:
 	Node();
@@ -41,9 +42,6 @@ public:
 	bool hasRight();
 
 	virtual void addOccupant(Bullet*);
-	virtual void removeOccupant(Bullet*);
-
-	bool isEmpty();
 };
 
 #endif /* NODE_H_ */

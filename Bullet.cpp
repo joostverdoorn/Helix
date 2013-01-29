@@ -12,7 +12,7 @@
 
 using namespace std;
 
-uint8_t Bullet::decay = 90;
+//uint8_t Bullet::decay = 90;
 
 Bullet::Bullet(Node *h, Main::Direction d) {
 	currentNode = h;
@@ -28,6 +28,7 @@ Bullet::Bullet(Node *h, Main::Direction d, Colour c) {
 
 	currentNode->addOccupant(this);
 	colour = c;
+	colour.multiply(1.25);
 }
 
 Bullet::~Bullet() {
@@ -35,46 +36,44 @@ Bullet::~Bullet() {
 }
 
 void Bullet::ping() {
-	// Decay a little
-	//uint8_t red = (float) colour->red * ((float) decay / 100.0F);
-	//uint8_t green = (float) colour->red * ((float) decay / 100.0F);
-	//uint8_t blue = (float) colour->red * ((float) decay / 100.0F);
+	move();
+	/*colour.multiply(.95);
 
-	//colour->setRGB(red, green, blue);
-
-	if (getMagnitude() < 3) {
+	if(brightness() < 6) {
 		die();
-	} else {
-		move();
-	}
+	}*/
 }
 
 void Bullet::die() {
-	Main::bullets.remove(this);
-	currentNode->removeOccupant(this);
-
-	//delete colour;
-
+	Main::removeBullet(this);
 	delete this;
 }
 
 void Bullet::move() {
 	if (direction == Main::LEFT && currentNode->hasLeft() && !currentNode->getLeft()->isFull()) {
-		currentNode->removeOccupant(this);
-		currentNode = currentNode->getLeft();
-		currentNode->addOccupant(this);
+		currentNode->getLeft()->addOccupant(this);
 	} else if (direction == Main::RIGHT && currentNode->hasRight() && !currentNode->getRight()->isFull()) {
-		currentNode->removeOccupant(this);
-		currentNode = currentNode->getRight();
-		currentNode->addOccupant(this);
+		currentNode->getRight()->addOccupant(this);
 	}
+}
+
+Node* Bullet::getNode() {
+	return currentNode;
+}
+
+void Bullet::setNode(Node *n) {
+	currentNode = n;
 }
 
 Colour Bullet::getColour() {
 	return colour;
 }
 
-uint8_t Bullet::getMagnitude() {
-	return colour.getMagnitude();
+Main::Direction Bullet::getDirection() {
+	return direction;
+}
+
+uint8_t Bullet::brightness() {
+	return colour.brightness();
 }
 

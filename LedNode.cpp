@@ -10,50 +10,41 @@
 
 LedNode::LedNode() {
 	brightness = 0;
-	colour = *Main::baseColour;
+	colour = Main::baseColour;
 }
 
 LedNode::~LedNode() {
 }
 
 void LedNode::ping() {
-	/*float targetBrightness = 0, diff = 0;
+	list<Bullet*> occupants = getOccupants();
+	//Serial.println(":Ping");
 
-	if (Main::activated || (Main::activated && Main::rightActivated > 0) || (Main::leftActivated > 0 && Main::rightActivated > 0)) {
-		targetBrightness += 30;
-	}
-
-	for (list<Bullet*>::const_iterator iterator = occupants.begin(); iterator != occupants.end(); iterator++) {
-		targetBrightness += (*iterator)->getMagnitude();
-	}
-
-	if (targetBrightness > 254) {
-		targetBrightness = 254;
-	}
-
-	diff = targetBrightness - brightness;
-
-	if (targetBrightness > brightness) {
-		brightness += diff / 5;
-	} else if (targetBrightness < brightness) {
-		brightness += diff / 15;
-	}*/
-
-	if(!isEmpty()) {
-		colour = occupants.front()->getColour();
-	} else if(Main::activated || (Main::leftActivated > 0 && Main::rightActivated > 0)) {
-		colour = *Main::activatedColour;
+	if (occupants.size() == maxOccupants && maxOccupants != 0) {
+		full = true;
 	} else {
-		colour = *Main::baseColour;
+		full = false;
+	}
+
+	if (Main::activated) {
+		colour.approach(Main::activatedColour);
+	} else if (occupants.size() > 0) {
+		Colour c = Colour(occupants.front()->getColour());
+		for (list<Bullet*>::iterator it = occupants.begin(); it != occupants.end(); it++) {
+			c.average((*it)->getColour());
+		}
+
+		colour.quickApproach(c);
+
+	} else if (Main::leftActivated > 0 && Main::rightActivated > 0) {
+		colour.approach(Main::pathColour);
+	} else {
+		colour.approach(Main::baseColour);
 	}
 }
 
 bool LedNode::isFull() {
-	if (maxOccupants == 0 || maxOccupants >= occupants.size() + 1) {
-		return false;
-	} else {
-		return true;
-	}
+	return full;
 }
 
 uint8_t LedNode::getBrightness() {
@@ -62,5 +53,25 @@ uint8_t LedNode::getBrightness() {
 
 Colour LedNode::getColour() {
 	return colour;
+}
+
+void LedNode::setColour(Colour c) {
+	colour = c;
+}
+
+void LedNode::addOccupant(Bullet *b) {
+	b->setNode(this);
+}
+
+list<Bullet*> LedNode::getOccupants() {
+	list<Bullet*> bs;
+
+	for (int i = 0; i < Main::bullets.size(); i++) {
+		if (Main::bullets[i]->getNode() == this) {
+			bs.push_back(Main::bullets[i]);
+		}
+	}
+
+	return bs;
 }
 

@@ -32,69 +32,62 @@ typedef enum Direction {
 typedef enum Pins {
 	SoftRX = 2, SoftTX = 3,
 
-	Button1 = 8, Button2 = 9,
+	TouchOut = 6, TouchIn = 7,
 
-	Status = 13,
-
-	LedData = 4, LedClock = 5, TouchOut = 6, TouchIn = 7,
+	LedData = 4, LedClock = 5,
 
 } Pins;
 
 extern void begin();
 extern void ping();
 
+extern void smallPing();
+extern void bigPing();
+extern void giantPing();
+
+extern void addBullet(Bullet*);
+extern void removeBullet(Bullet*);
+
 static void log();
 static int freeRam();
 
-extern void send(const unsigned char*, uint8_t, Direction);
-static void broadcast(const unsigned char*, uint8_t);
+extern void send(std::vector<char>, Direction);
+extern void broadcast(std::vector<char>);
 
-static void slowShiftOut(uint8_t);
-static void writeByte(uint8_t);
-static void writeGuard();
-static void writeFrame(LedNode*);
-static void writeFrame();
-static void pushStrip();
-static void pingStrip();
+extern void slowShiftOut(uint8_t);
+extern void writeByte(uint8_t);
+extern void writeGuard();
+extern void writeFrame(LedNode*);
+extern void writeFrame();
+extern void pushStrip();
+extern void pingStrip();
 
-extern std::list<Bullet*> bullets;
+extern Colour HSVtoColour(float, float, float);
+
+extern std::vector<Bullet*> bullets;
 extern std::vector<LedNode*> nodes;
+
+extern uint8_t bigInterval;
 
 extern bool activated;
 extern uint8_t leftActivated;
 extern uint8_t rightActivated;
+extern bool soundActive;
+extern Colour soundColour;
 
-extern Colour* activatedColour;
-extern Colour* baseColour;
+extern Colour activatedColour;
+extern Colour pathColour;
+extern Colour baseColour;
+extern Colour debugColour;
 
-//static
-/*static uint16_t baudRate;
- static SoftwareSerial *softSerial;
- static HardwareSerial *hardSerial;
+extern Colour colours[7];
 
- static unsigned long lastSmallUpdate;
- static unsigned long lastBigUpdate;
- static unsigned long lastGiantUpdate;
- static uint8_t ledDelay;
- static uint8_t smallInterval;
- static uint8_t bigInterval;
- static uint16_t giantInterval;
+extern uint16_t id;
+extern bool hasLeftNeighbour;
+extern bool hasRightNeighbour;
 
- static bool pushing;
-
- static uint8_t nLeds;
-
-
-
- static VirtualNode* leftNode;
- static VirtualNode* rightNode;
-
-
-
- static std::list<uint8_t> soundLevels;
- static CapacitiveSensor touchSensor;
-
- ;/**/
+extern uint8_t pulseThreshold;
+extern uint8_t slumberThreshold;
 }
 
 #endif /* MAIN_H_ */

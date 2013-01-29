@@ -16,7 +16,11 @@ public:
 	Colour(uint8_t, uint8_t, uint8_t);
 	Colour();
 	void setRGB(uint8_t, uint8_t, uint8_t);
-	uint8_t getMagnitude();
+	void approach(Colour);
+	void quickApproach(Colour);
+	void multiply(float);
+	void average(Colour);
+	uint8_t brightness();
 
 	uint8_t red;
 	uint8_t green;

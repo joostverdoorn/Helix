@@ -20,7 +20,7 @@ public:
 	virtual ~VirtualNode();
 
 	void ping();
-	bool full;
+
 
 	void setLeft(Node*);
 	void setRight(Node*);
@@ -28,20 +28,22 @@ public:
 	void addOccupant(Bullet*);
 	void removeOccupant(Bullet*);
 
-	void send(const unsigned char*, uint8_t size);
-	const unsigned char* receive();
+	bool isFull();
+
+	void send(vector<char>);
+	vector<char> receive();
 
 private:
-	static char packetStart[2];
-	static char packetEnd[2];
-	static vector<char> input;
+	static char packetStart;
+	static char packetEnd;
+	vector<char> input;
 
 	Stream *stream;
 	Node *neighbour;
 
 	Main::Direction direction;
 
-	bool isFull();
+
 
 	bool available();
 };

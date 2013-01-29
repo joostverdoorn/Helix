@@ -20,6 +20,8 @@ class LedNode: public Node {
 	float brightness;
 	Colour colour;
 
+	//vector<char> input = vector<char>(2);
+
 public:
 	LedNode();
 	virtual ~LedNode();
@@ -28,7 +30,11 @@ public:
 	bool isFull();
 
 	Colour getColour();
+	void setColour(Colour);
 	uint8_t getBrightness();
+
+	void addOccupant(Bullet*);
+	list<Bullet*> getOccupants();
 };
 
 #endif /* LEDNODE_H_ */
